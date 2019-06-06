@@ -15,7 +15,7 @@ def merge_segments(video_folder):
     with open(videos_list_path, 'w') as videos_list_file:
         videos_list = os.listdir(video_folder)
         videos_list = sorted(videos_list)
-        videos_list = [x for x in videos_list if '.mp4' in x]
+        videos_list = [x for x in videos_list if '.mp4' in x or '.ts' in x]
         for video in videos_list:
             videos_list_file.write('file %s\n'%video)
     print(" ".join(["ffmpeg",'-hide_banner','-v','fatal',"-f","concat","-i",videos_list_path,"-c","copy",[x for x in video_folder.split('/') if x is not ''][-1]]))
@@ -76,11 +76,14 @@ class Uploader:
         # Get list of files
         folders = []
         files = []
-        for p_folder, c_folders, c_files in list(os.walk(self.folder)):
-            folders.append(p_folder)
-            m_name = [x for x in p_folder.split('/') if x is not ''][-1]
-            merge_segments(p_folder)
-            files.append(os.path.join(p_folder, m_name+'.mp4'))
+        for p_folder, c_folders, c_files in list(os.walk(self.folder))[1:]:
+            try:
+                folders.append(p_folder)
+                m_name = [x for x in p_folder.split('/')][-1]
+                merge_segments(p_folder)
+                files.append(os.path.join(p_folder, m_name+'.mp4'))
+            except Exception as e:
+                print(e)
 
         # files = [y for x in files for y in x]
 
@@ -110,8 +113,9 @@ class Uploader:
             alert_message = alert_message.text
 
     def upload_file(self, file_location):
-        upload_input = self.webdriver.find_element_by_css_selector('input[type="file"][multiple]')
-        upload_input.send_keys(file_location)
+        if os.path.exists(file_location):
+            upload_input = self.webdriver.find_element_by_css_selector('input[type="file"][multiple]')
+            upload_input.send_keys(file_location)
         # upload_input.submit()
 
 import sys
