@@ -13,5 +13,5 @@ pip install -r requirements.txt
 
 # Running
 ```
-python3 main.py <folder location> <username> <password>
+python3 main.py <folder location> <name of firefox profile where channel is logged in>
 ```
