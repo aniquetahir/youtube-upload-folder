@@ -3,6 +3,7 @@ import selenium
 import time
 from selenium.webdriver import Firefox
 from selenium.webdriver import FirefoxOptions
+from selenium.webdriver import FirefoxProfile
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -13,8 +14,9 @@ class Uploader:
         self.username = username
         self.password = password
         firefox_options = FirefoxOptions()
-        # firefox_options.add_argument('-headless')
-        self.webdriver = Firefox(firefox_options=firefox_options)
+        firefox_profile = FirefoxProfile('/home/aniquetahir/.mozilla/firefox/abys3rq9.default')
+        firefox_options.add_argument('-headless')
+        self.webdriver = Firefox(firefox_profile, executable_path='/home/aniquetahir/youtube-upload-folder/geckodriver',firefox_options=firefox_options, firefox_binary='/home/aniquetahir/firefox/firefox')
 
     def login(self):
         w = self.webdriver
@@ -48,7 +50,7 @@ class Uploader:
 
         # Get list of files
         files = []
-        for p_folder, c_folders, c_files in list(os.walk('./')):
+        for p_folder, c_folders, c_files in list(os.walk(self.folder)):
             files.append([os.path.abspath(os.path.join(p_folder, x)) for x in c_files])
 
         files = [y for x in files for y in x]
@@ -80,10 +82,10 @@ class Uploader:
 
 import sys
 if __name__=="__main__":
-    folder = sys.argv[1]
-    username = sys.argv[2]
-    password = sys.argv[3]
+    folder = '/extradisk/mfc-node-master/complete/'
+    username = ''
+    password = ''
     uploader = Uploader(folder, username, password)
-    uploader.login()
+    # uploader.login()
     uploader.uploadFolder()
     pass
