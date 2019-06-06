@@ -1,5 +1,4 @@
 import os
-import selenium
 import time
 from selenium.webdriver import Firefox
 from selenium.webdriver import FirefoxOptions
@@ -8,13 +7,39 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
+import subprocess
+import sys, shutil
+def merge_segments(video_folder):
+    # Create videos.txt
+    videos_list_path = os.path.join(video_folder,'videos.txt')
+    with open(videos_list_path, 'w') as videos_list_file:
+        videos_list = os.listdir(video_folder)
+        videos_list = sorted(videos_list)
+        videos_list = [x for x in videos_list if '.mp4' in x]
+        for video in videos_list:
+            videos_list_file.write('file %s\n'%video)
+    print(" ".join(["ffmpeg",'-hide_banner','-v','fatal',"-f","concat","-i",videos_list_path,"-c","copy",[x for x in video_folder.split('/') if x is not ''][-1]]))
+    return subprocess.run([
+        "ffmpeg",
+        '-hide_banner',
+        '-v',
+        'fatal',
+        "-f",
+        "concat",
+        "-i",
+        videos_list_path,
+        "-c",
+        "copy",
+        os.path.join(video_folder, [x for x in video_folder.split('/') if x is not ''][-1]+'.mp4')
+    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
 class Uploader:
-    def __init__(self, folder, username, password):
+    def __init__(self, folder, profile, username, password):
         self.folder = folder
         self.username = username
         self.password = password
         firefox_options = FirefoxOptions()
-        firefox_profile = FirefoxProfile('/home/aniquetahir/.mozilla/firefox/abys3rq9.default')
+        firefox_profile = FirefoxProfile('/home/aniquetahir/.mozilla/firefox/'+profile)
         firefox_options.add_argument('-headless')
         self.webdriver = Firefox(firefox_profile, executable_path='/home/aniquetahir/youtube-upload-folder/geckodriver',firefox_options=firefox_options, firefox_binary='/home/aniquetahir/firefox/firefox')
 
@@ -49,19 +74,28 @@ class Uploader:
         )
 
         # Get list of files
+        folders = []
         files = []
         for p_folder, c_folders, c_files in list(os.walk(self.folder)):
-            files.append([os.path.abspath(os.path.join(p_folder, x)) for x in c_files])
+            folders.append(p_folder)
+            m_name = [x for x in p_folder.split('/') if x is not ''][-1]
+            merge_segments(p_folder)
+            files.append(os.path.join(p_folder, m_name+'.mp4'))
 
-        files = [y for x in files for y in x]
+        # files = [y for x in files for y in x]
 
         for file in files:
             self.upload_file(file)
             time.sleep(10)
 
         self.wait_for_uploads()
-        self.remove_files(files)
+        self.remove_folders(folders)
+        # self.remove_files(files)
         w.close()
+
+    def remove_folders(self, folders):
+        for folder in folders:
+            shutil.rmtree(folder)
 
     def remove_files(self, files):
         for file in files:
@@ -82,10 +116,11 @@ class Uploader:
 
 import sys
 if __name__=="__main__":
-    folder = '/extradisk/mfc-node-master/complete/'
+    folder = sys.argv[1]
+    profile = sys.argv[2]
     username = ''
     password = ''
-    uploader = Uploader(folder, username, password)
+    uploader = Uploader(folder, profile, username, password)
     # uploader.login()
     uploader.uploadFolder()
     pass
