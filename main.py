@@ -83,18 +83,33 @@ class Uploader:
                 m_name = [x for x in p_folder.split('/')][-1]
                 merge_segments(p_folder)
                 files.append(os.path.join(p_folder, m_name+'.mp4'))
+                if '_3D' in m_name:
+                    subprocess.run([
+                        "python3",
+                        '/home/aniquetahir/spatial-media/spatialmedia/cli.py',
+                        '-i',
+                        os.path.join(p_folder, m_name+'.mp4'),
+                        '-o',
+                        os.path.join(p_folder, m_name+'VR.mp4')
+                    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    os.unlink(os.path.join(p_folder, m_name+'.mp4'))
+                    self.upload_file(os.path.join(p_folder, m_name+'VR.mp4'))
+                else:
+                    self.upload_file(os.path.join(p_folder, m_name + '.mp4'))
+                self.wait_for_uploads()
+                shutil.rmtree(p_folder)
             except Exception as e:
                 print(e)
 
         # files = [y for x in files for y in x]
 
-        for file in files:
-            self.upload_file(file)
-            time.sleep(10)
-
-        self.wait_for_uploads()
-        self.remove_folders(folders)
-        # self.remove_files(files)
+        # for file in files:
+        #     self.upload_file(file)
+        #     time.sleep(10)
+        #
+        # self.wait_for_uploads()
+        # self.remove_folders(folders)
+        # # self.remove_files(files)
         w.close()
 
     def remove_folders(self, folders):
